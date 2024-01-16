@@ -1,19 +1,44 @@
 open List
+open Str
 
 let filename = Sys.argv.(1)
 
-let s_to_shape s =
-  if s = "A" || s = "X" then 1 else if s = "B" || s = "Y" then 2 else if s = "C" || s = "Z" then 3 else 0
+let win_list = [[3; 1; 2]; [1; 2; 3]; [2; 3; 1]]
 
-let get_score a i =
-  if a = 0 then i else if i = a then 3 + i else if (a = 1 && i !=2) || (a = 2 && i != 3) || (a = 3 && i != 1) then 0 + i else 6+i
+let score a i = match a with
+  | 5 -> i
+  | _ when i = a -> 3+i+1
+  | _ when (nth (nth win_list a) 2) == i+1 -> 6+i+1
+  | _ -> i+1
+
+let shape s = match s with
+  | "B" | "Y" -> 1
+  | "C" | "Z" -> 2
+  | _ -> 0
 
 let p1 file =
     In_channel.with_open_bin file In_channel.input_all
-    |> Str.split (Str.regexp "\n")
-    |> List.map (fun f -> Str.split (Str.regexp " ") f |> map s_to_shape
-      |> fold_left get_score 0)
+    |> split (regexp "\n")
+    |> map (fun f -> split (regexp " ") f |> map shape |> fold_left score 5)
+    |> fold_left (+) 0
+
+ (*p2*)
+let points b = match b with
+  | "Y" -> 3
+  | "Z" -> 6
+  | _ -> 0
+
+let score_p2 a i = match a with
+  | 5 -> (shape i)
+  | _ -> ((nth (nth win_list a) (shape i)) + (points i))
+
+let p2 file =
+    In_channel.with_open_bin file In_channel.input_all
+    |> split (regexp "\n")
+    |> map (fun f -> split (regexp " ") f |> fold_left score_p2 5)
     |> fold_left (+) 0
 
 let () =
     p1 filename |> string_of_int |> print_endline;
+    print_endline "";
+    p2 filename |> string_of_int |> print_endline;
