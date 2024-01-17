@@ -1,0 +1,4 @@
+(executable
+ (public_name d3)
+ (name main)
+ (libraries d3 str))
