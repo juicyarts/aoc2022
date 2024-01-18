@@ -10,7 +10,7 @@ let count_substring substring str =
 
 let p1 file seq_len =
   let contents = In_channel.with_open_bin file In_channel.input_all in
-  split (regexp "") (String.trim contents)
+  split (regexp "") contents
   |> fold_left
        (fun (i, j) (_ : string) ->
          match i with
@@ -28,10 +28,8 @@ let p1 file seq_len =
        (0, 0)
 
 let () =
-  let a, b = p1 filename 4 in
+  let _, b = p1 filename 4 in
   print_endline (string_of_int b);
-  print_endline (string_of_int a);
 
-  let a, b = p1 filename 14 in
-  print_endline (string_of_int b);
-  print_endline (string_of_int a)
+  let _, b = p1 filename 14 in
+  print_endline (string_of_int b)
