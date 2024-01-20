@@ -1,0 +1,4 @@
+(executable
+ (public_name d8)
+ (name main)
+ (libraries d8 str spectrum))
