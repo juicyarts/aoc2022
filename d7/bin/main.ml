@@ -26,54 +26,47 @@ let index_tree (dirs, cd) command =
         ( dirs,
           let x, _, _ = Hashtbl.find dirs cd in
           x )
-      else (
-        if Hashtbl.mem dirs (parse_command command "$ cd ") = true then ()
-        else Hashtbl.add dirs (parse_command command "$ cd ") (cd, true, 0);
-        (dirs, parse_command command "$ cd "))
+      else
+        let path = cd ^ parse_command command "$ cd " in
+        Hashtbl.add dirs path (cd, true, 0);
+        (dirs, path)
   | _ when String.starts_with ~prefix:"$ ls" command -> (dirs, cd)
   | _ when String.starts_with ~prefix:"dir " command ->
-      if Hashtbl.mem dirs (parse_command command "dir ") = true then ()
-      else Hashtbl.add dirs (parse_command command "dir ") (cd, true, 0);
+      let path = parse_command command "dir " in
+      Hashtbl.add dirs path (cd, true, 0);
       (dirs, cd)
   | _ ->
-      Hashtbl.add dirs
-        (nth (parse_file command) 1)
+      let path = cd ^ nth (parse_file command) 1 in
+      Hashtbl.add dirs path
         (cd, false, int_of_string (nth (parse_file command) 0));
       (dirs, cd)
-
-let rec render tree dir depth =
-  let dirsize = get_dir_size dir 0 tree in
-
-  if dirsize <= 100000 then
-    print_endline
-      (Printf.sprintf "%*s- %s (dir, size=%s)" depth "" dir
-         (string_of_int dirsize))
-  else ();
-  Hashtbl.iter
-    (fun k (parent, is_dir, _) ->
-      match k with
-      | _ when k = dir -> ()
-      | _ when parent = dir ->
-          if is_dir then render tree k (depth + 2)
-          else ()
-            (*print_endline
-              (Printf.sprintf "%*s- %s" (depth + 2) "" k
-              ^ " (file, size=" ^ string_of_int size ^ ")")*)
-      | _ -> ())
-    tree
 
 let p1 file =
   let content = In_channel.with_open_bin file In_channel.input_all in
   let tree, _ =
     split (regexp "\n") content |> fold_left index_tree (Hashtbl.create 100, "/")
   in
-  render tree "/" 0;
   Hashtbl.fold
     (fun k (_, is_dir, _) i ->
       let size = get_dir_size k 0 tree in
       if is_dir && size <= 100000 then i + size else i)
     tree 0
 
+let p2 file =
+  let content = In_channel.with_open_bin file In_channel.input_all in
+  let tree, _ =
+    split (regexp "\n") content |> fold_left index_tree (Hashtbl.create 100, "/")
+  in
+  let total = get_dir_size "/" 0 tree in
+  let to_free = 30000000 - (70000000 - total) in
+  Hashtbl.fold
+    (fun k (_, is_dir, _) i ->
+      let size = get_dir_size k 0 tree in
+      if is_dir && size >= to_free && i > size then size else i)
+    tree total
+
 let () =
   let a = p1 filename in
-  print_endline (string_of_int a)
+  print_endline (string_of_int a);
+  let b = p2 filename in
+  print_endline (string_of_int b)
